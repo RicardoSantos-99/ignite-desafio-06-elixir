@@ -1,19 +1,20 @@
 defmodule Flightex.Bookings.Report do
   alias Flightex.Bookings.Agent, as: BookingAgent
-  alias Flightex.Users.Agent, as: UserAgent
   alias Flightex.Bookings.Booking
 
-  def create(filename \\ "report.csv") do
-    order_list = build_booking_list()
+  def create(date_init, date_final, filename \\ "report.csv") do
+    order_list = build_booking_list(date_init, date_final)
 
     File.write(filename, order_list)
   end
 
-  defp build_booking_list() do
+  defp build_booking_list(date_init, date_final) do
     {:ok, bookings} = BookingAgent.get_all()
 
     bookings
     |> Map.values()
+    |> Enum.map(&filter_by_dates(&1, date_init, date_final))
+    |> Enum.filter(&is_struct(&1))
     |> Enum.map(&order_string/1)
   end
 
@@ -24,21 +25,20 @@ defmodule Flightex.Bookings.Report do
          local_origin: local_origin,
          user_id: user_id
        }) do
-    user_name = get_user_name(user_id)
-
-    "#{user_id},#{user_name},#{local_origin},#{local_destination},#{complete_date}\n"
+    "#{user_id},#{local_origin},#{local_destination},#{complete_date}\n"
   end
 
-  def get_user_name(user_id) do
-    {:ok, users} = UserAgent.get_all()
+  defp filter_by_dates(booking, date_init, date_final) do
+    booking
+    |> validate_date(date_init, date_final)
+  end
 
-    users =
-      users
-      |> Map.values()
-      |> Enum.filter(fn user -> user.id == user_id end)
+  defp validate_date(booking, date_init, date_final) do
+    date_init = NaiveDateTime.compare(booking.complete_date, date_init)
+    date_final = NaiveDateTime.compare(booking.complete_date, date_final)
 
-    user = hd(users)
-
-    user.name
+    if date_init == :gt and date_final == :lt do
+      booking
+    end
   end
 end
