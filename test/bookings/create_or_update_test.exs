@@ -15,7 +15,7 @@ defmodule Flightex.Bookings.CreateOrUpdateTest do
         complete_date: ~N[2001-05-07 03:05:00],
         local_origin: "Brasilia",
         local_destination: "Bananeiras",
-        user_id: "e9f7d281-b9f2-467f-9b34-1b284ed58f9e",
+        user_id: "b45b9fde-475e-4b59-b93a-8a6ef6a94374"
       }
 
       {:ok, uuid} = CreateOrUpdate.call(params)
